@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>QuickSort Simulator</title>
+<style>
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    margin: 0; padding: 0; 
+    background: linear-gradient(135deg, #74ABE2, #5563DE); 
+    color: #333; 
+    display: flex; 
+    justify-content: center; 
+    align-items: flex-start; 
+    height: 100vh; 
+    padding-top: 40px;
+}
+#container {
+    display: flex;
+    gap: 30px;
+    width: 90%;
+    max-width: 1200px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+#left { width: 45%; overflow: auto; }
+#right { width: 55%; }
+#array { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.box { width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 8px; border: 1px solid #ccc; font-weight: bold; transition: all 0.3s ease; }
+.pivot { background: #FF6B6B; color: #fff; }
+.compare { background: #FFD93D; color: #333; }
+.sorted { background: #6BCB77; color: #fff; }
+.highlight { background: #D0E0FF; font-weight: bold; border-radius: 5px; }
+code { white-space: pre; display: block; background: #f7f7f7; padding: 15px; border-radius: 8px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); overflow-x: auto; }
+button { 
+    background: #5563DE; 
+    color: #fff; 
+    border: none; 
+    padding: 8px 16px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    margin-right: 10px; 
+    transition: 0.3s;
+}
+button:hover { background: #3b4fc0; }
+input, select { padding: 6px 10px; border-radius: 5px; border: 1px solid #ccc; margin-right: 10px; }
+h3 { margin-top: 0; }
+</style>
+</head>
+<body>
+<div id="container">
+<div id="left">
+<h3>Code C++ (Highlight khi chạy)</h3>
+<code id="code"></code>
+</div>
+<div id="right">
+<h3>Mô phỏng QuickSort</h3>
+<label>Chọn partition:</label>
+<select id="partition">
+<option value="lomuto">Lomuto Partition</option>
+<option value="hoare">Hoare Partition</option>
+<option value="naive">Naive Partition</option>
+</select>
+<br><br>
+<label>Nhập mảng (vd: 5,3,8,2,1):</label>
+<input id="inputArr" value="5,3,8,2,1" />
+<button onclick="startSim()">Run</button>
+<button onclick="stopSim()">Stop</button>
+<button onclick="resetSim()">Reset</button>
+<br><br>
+<div id="array"></div>
+</div>
+</div>
+
+<script>
+const codeText = `#include <bits/stdc++.h>
+using namespace std;
+
+ }
+
+
+int partition(vector<int>& arr, int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+    for (int j = low; j <= high - 1; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
+}
+
+void // --- QuickSort + mô phỏng ---
+void quickSort(vector<int>& arr, int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+cin.tie(0); cout.tie(0);
+    int n; cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    quickSort(a, 0, n - 1);
+    for (int i = 0; i < n; i++) cout << a[i] << " ";
+    return 0;
+}`;
+
+function renderCode() {
+    let lines = codeText.split("\n");
+    let html = "";
+    lines.forEach((l, i) => {
+        html += `<div id='line${i}'><span style='color:gray'>${i+1}</span> ${l}</div>`;
+    });
+    document.getElementById("code").innerHTML = html;
+}
+renderCode();
+
+let arr = [];
+let running = false;
+
+function drawArray(pivotIndex=-1, compareIndex=-1, sorted=[]) {
+    let area = document.getElementById("array");
+    area.innerHTML = "";
+    arr.forEach((num, i) => {
+        let div = document.createElement("div");
+        div.className = "box";
+        div.textContent = num;
+        if (i === pivotIndex) div.classList.add("pivot");
+        if (i === compareIndex) div.classList.add("compare");
+        if (sorted.includes(i)) div.classList.add("sorted");
+        area.appendChild(div);
+    });
+}
+
+function highlight(line) {
+    document.querySelectorAll("#code div").forEach(x => x.classList.remove("highlight"));
+    let el = document.getElementById("line"+line);
+    if (el) el.classList.add("highlight");
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function quickSortSim(l, r, sorted=[]) {
+    if (!running) return;
+    if (l >= r) return;
+    highlight(13);
+    await sleep(800);
+    if (!running) return;
+
+    let pi = await partitionSim(l, r, sorted);
+    if (!running) return;
+    sorted.push(pi);
+
+    await quickSortSim(l, pi-1, sorted);
+    await quickSortSim(pi+1, r, sorted);
+}
+
+async function partitionSim(l, r, sorted) {
+    let pivot = arr[r];
+    let i = l - 1;
+    highlight(3);
+    drawArray(r, -1, sorted);
+    await sleep(800);
+    if (!running) return;
+
+    highlight(5);
+    for (let j=l; j<=r-1; j++){
+        if (!running) return;
+        drawArray(r, j, sorted);
+        await sleep(700);
+        if (!running) return;
+
+        highlight(6);
+        if (arr[j] < pivot){
+            i++;
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+            highlight(8);
+            drawArray(r, j, sorted);
+            await sleep(700);
+            if (!running) return;
+        }
+    }
+
+    highlight(12);
+    [arr[i+1], arr[r]] = [arr[r], arr[i+1]];
+    drawArray(i+1, -1, sorted);
+    await sleep(800);
+    return i+1;
+}
+
+async function startSim(){
+    arr = document.getElementById("inputArr").value.split(",").map(x=>parseInt(x));
+    drawArray();
+    running = true;
+    await quickSortSim(0, arr.length-1, []);
+    running = false;
+}
+
+function stopSim(){ running = false; }
+function resetSim(){ location.reload(); }
+</script>
+</body>
+</html>
